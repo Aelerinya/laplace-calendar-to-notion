@@ -73,8 +73,8 @@ def get_calendar_events(days_ago: int | None = None) -> List[GCalEvent]:
     cal = Calendar.from_ical(ical_data)  # Use ical_data instead of response.text
 
     # Calculate the date range
+    now = date.today()
     if days_ago is not None:
-        now = date.today()
         time_ago = now - timedelta(days=days_ago)
 
     events: List[GCalEvent] = []
@@ -103,7 +103,7 @@ def get_calendar_events(days_ago: int | None = None) -> List[GCalEvent]:
                 continue
 
             # Check if the event is within the specified date range
-            if days_ago is None or (time_ago <= start <= now):
+            if (days_ago is None and end <= now) or (time_ago <= end <= now):
                 events.append(
                     {
                         "summary": summary,
