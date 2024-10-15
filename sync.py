@@ -23,7 +23,7 @@ load_dotenv()
 class GCalEvent(TypedDict):
     summary: str
     start: date
-    end: date | None
+    end: date
     description: str
     id: str
 
@@ -37,6 +37,7 @@ class GCalStay(TypedDict):
     guest: str
     id: str
 
+
 # Define a TypedDict for the structure of the typed_object
 class NotionStay(TypedDict):
     id: str
@@ -45,7 +46,7 @@ class NotionStay(TypedDict):
     End: date
     Guest: str
     Name: Optional[str]
-    GCalID: Optional[str]
+    GCalID: str
 
 
 def get_calendar_events(days_ago: int = 30) -> List[GCalEvent]:
@@ -83,7 +84,13 @@ def get_calendar_events(days_ago: int = 30) -> List[GCalEvent]:
                 )
                 continue
 
-            if end and isinstance(end, datetime):
+            if not end:
+                logging.info(
+                    f"Skipping {summary} because it's not a stay (end is not set)"
+                )
+                continue
+
+            if isinstance(end, datetime):
                 logging.info(
                     f"Skipping {summary} because it's not a stay (end is not a simple date)"
                 )
@@ -127,7 +134,7 @@ def filter_stay_events(events: List[GCalEvent]) -> List[GCalStay]:
         {
             "summary": event["summary"],
             "start": event["start"],
-            "end": event["end"] if event["end"] else event["start"],
+            "end": event["end"],
             "description": event["description"],
             # Remove Laplace/La Place and previous word
             "guest": guest_name_from_summary(event["summary"]),
@@ -177,6 +184,14 @@ def get_existing_notion_stays() -> List[NotionStay]:
             logging.warning(f"Notion: No guest name found for {name}")
             guest_name = "Unknown guest"
 
+        if properties.get("GCal ID", {}).get("rich_text", [{}])[0]["plain_text"]:
+            gcal_id = properties.get("GCal ID", {}).get("rich_text", [{}])[0][
+                "plain_text"
+            ]
+        else:
+            logging.warning(f"Notion: No GCal ID found for {name}")
+            continue
+
         typed_object: NotionStay = {
             "id": row_id,
             "Paid": properties["Paid"]["checkbox"],
@@ -184,9 +199,7 @@ def get_existing_notion_stays() -> List[NotionStay]:
             "End": datetime.fromisoformat(end_date).date(),
             "Guest": guest_name,
             "Name": name,
-            "GCalID": properties.get("GCal ID", {}).get("rich_text", [{}])[0][
-                "plain_text"
-            ],
+            "GCalID": gcal_id,
         }
 
         typed_objects.append(typed_object)
@@ -200,31 +213,16 @@ def get_existing_notion_stays() -> List[NotionStay]:
 def find_missing_gcal_stays(
     gcal_stays: List[GCalStay], notion_stays: List[NotionStay]
 ) -> List[GCalStay]:
+
+    existing_gcal_ids = set([stay["GCalID"] for stay in notion_stays])
+
+    # check if the gcal event is in the notion stayse
     missing_stays: List[GCalStay] = []
     for gcal_stay in gcal_stays:
-        for notion_stay in notion_stays:
-            print(" ==== Comparing ==== ")
-            print(gcal_stay["start"], notion_stay["Start"])
-            print(gcal_stay["end"], notion_stay["End"])
-            print(gcal_stay["guest"], notion_stay["Guest"])
-
-            if (
-                gcal_stay["start"] == notion_stay["Start"]
-                # Notion end date is inclusive, but GCal is exclusive, so add one day
-                and gcal_stay["end"] == notion_stay["End"] + timedelta(days=1)
-            ):
-                first_name = gcal_stay["guest"].split(" ")[0].lower()
-                if first_name in notion_stay["Guest"].lower() or (
-                    notion_stay["Name"] and first_name in notion_stay["Name"].lower()
-                ):
-                    print(f"Found: {gcal_stay['summary']} on {gcal_stay['start']}")
-                    break  # Exit the inner loop if a match is found
-                else:
-                    print(
-                        f"Warning: Ambiguity between '{gcal_stay['summary']}' and '{notion_stay['Name']}' on {gcal_stay['start']}"
-                    )
-        else:  # This else executes if the inner loop did not break
+        if gcal_stay["id"] not in existing_gcal_ids:
             missing_stays.append(gcal_stay)
+        else:
+            logging.info(f"GCal event {gcal_stay["summary"]} already in Notion")
 
     return missing_stays
 
@@ -240,15 +238,12 @@ def add_to_notion(event: GCalStay) -> None:
             "Date": {
                 "date": {
                     "start": event["start"].isoformat(),
-                    "end": event["end"].isoformat(),
+                    "end": (event["end"] - timedelta(days=1)).isoformat(),
                 }
             },
-            "Guest": {"relation": [{"id": "120baaa5-2195-8126-b025-c8ab1dc374d1"}]},
-            # "Guest name": {
-            #     "rollup": {
-            #         "array": [{"title": [{"text": {"content": event["guest"]}}]}]
-            #     }
-            # },
+            "GCal ID": {
+                "rich_text": [{"text": {"content": event["id"]}}],
+            },
         },
     )
 
@@ -279,9 +274,17 @@ def main() -> None:
     #     "end": date.today() + timedelta(days=1),
     #     "description": "This is a test event",
     #     "guest": "Test guest",
+    #     "id": "test_id",
     # }
 
     # add_to_notion(test_event_to_add)
+
+    count = 0
+    for stay in missing_stays:
+        count += 1
+        add_to_notion(stay)
+
+    logging.info(f"Added {count} stays to Notion")
 
 
 if __name__ == "__main__":
