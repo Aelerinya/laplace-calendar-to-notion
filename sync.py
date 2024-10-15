@@ -216,6 +216,8 @@ def get_existing_notion_guests() -> Dict[str, NotionGuest]:
     results = notion.databases.query(database_id=database_id)
     results = cast(Dict[str, Any], results)
 
+    ambiguous_first_names: List[str] = []
+
     guests: Dict[str, NotionGuest] = {}
     for item in results["results"]:
         row_id = item["id"]
@@ -228,8 +230,13 @@ def get_existing_notion_guests() -> Dict[str, NotionGuest]:
             continue
 
         first_name = name.split(" ")[0].lower()
-        guests[first_name] = {
-            "id": row_id,
+        if first_name in guests:
+            logging.warning(f"Notion: Ambiguous first name {first_name} for '{name}' and '{guests[first_name]['name']}'")
+            ambiguous_first_names.append(first_name)
+            del guests[first_name]
+        elif first_name not in ambiguous_first_names:
+            guests[first_name] = {
+                "id": row_id,
             "name": name,
         }
 
