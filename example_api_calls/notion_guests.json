@@ -1,0 +1,59 @@
+{
+    "object": "page",
+    "id": "120baaa5-2195-8126-b025-c8ab1dc374d1",
+    "created_time": "2024-10-15T09:43:00.000Z",
+    "last_edited_time": "2024-10-15T09:43:00.000Z",
+    "created_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+    },
+    "last_edited_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+    },
+    "cover": null,
+    "icon": null,
+    "parent": {
+        "type": "database_id",
+        "database_id": "120baaa5-2195-8108-9288-dd31de8ac3b2"
+    },
+    "archived": false,
+    "in_trash": false,
+    "properties": {
+        "Guest stays": {
+            "id": "P%3CVn",
+            "type": "relation",
+            "relation": [
+                {
+                    "id": "120baaa5-2195-81f6-a6fd-dc0408a34559"
+                }
+            ],
+            "has_more": false
+        },
+        "Name": {
+            "id": "title",
+            "type": "title",
+            "title": [
+                {
+                    "type": "text",
+                    "text": {
+                        "content": "Simon Baars",
+                        "link": null
+                    },
+                    "annotations": {
+                        "bold": false,
+                        "italic": false,
+                        "strikethrough": false,
+                        "underline": false,
+                        "code": false,
+                        "color": "default"
+                    },
+                    "plain_text": "Simon Baars",
+                    "href": null
+                }
+            ]
+        }
+    },
+    "url": "https://www.notion.so/Simon-Baars-120baaa521958126b025c8ab1dc374d1",
+    "public_url": null
+}

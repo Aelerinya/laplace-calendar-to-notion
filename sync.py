@@ -49,7 +49,12 @@ class NotionStay(TypedDict):
     GCalID: str
 
 
-def get_calendar_events(days_ago: int = 30) -> List[GCalEvent]:
+class NotionGuest(TypedDict):
+    id: str
+    name: str
+
+
+def get_calendar_events(days_ago: int | None = None) -> List[GCalEvent]:
     # Get the iCal URL from environment variables
     ical_url = os.environ.get("GOOGLE_CALENDAR_ICAL_URL")
 
@@ -68,8 +73,9 @@ def get_calendar_events(days_ago: int = 30) -> List[GCalEvent]:
     cal = Calendar.from_ical(ical_data)  # Use ical_data instead of response.text
 
     # Calculate the date range
-    now = date.today()
-    time_ago = now - timedelta(days=days_ago)
+    if days_ago is not None:
+        now = date.today()
+        time_ago = now - timedelta(days=days_ago)
 
     events: List[GCalEvent] = []
     for component in cal.walk():
@@ -97,7 +103,7 @@ def get_calendar_events(days_ago: int = 30) -> List[GCalEvent]:
                 continue
 
             # Check if the event is within the specified date range
-            if time_ago <= start <= now:
+            if days_ago is None or (time_ago <= start <= now):
                 events.append(
                     {
                         "summary": summary,
@@ -155,10 +161,6 @@ def get_existing_notion_stays() -> List[NotionStay]:
     # example of a row in notion_stay.json
     typed_objects: List[NotionStay] = []
 
-    # save to json
-    with open("notion_stays.json", "w") as f:
-        json.dump(results["results"][0], f, indent=4)
-
     for item in results["results"]:
         row_id = item["id"]
         properties = item["properties"]
@@ -207,6 +209,33 @@ def get_existing_notion_stays() -> List[NotionStay]:
     return typed_objects
 
 
+def get_existing_notion_guests() -> Dict[str, NotionGuest]:
+    notion = Client(auth=os.environ["NOTION_TOKEN"])
+    database_id = os.environ["NOTION_GUEST_DB_ID"]
+
+    results = notion.databases.query(database_id=database_id)
+    results = cast(Dict[str, Any], results)
+
+    guests: Dict[str, NotionGuest] = {}
+    for item in results["results"]:
+        row_id = item["id"]
+        properties = item["properties"]
+
+        if "title" in properties["Name"]:
+            name = " ".join(part["plain_text"] for part in properties["Name"]["title"])
+        else:
+            logging.warning(f"Notion: No name found for {row_id}")
+            continue
+
+        first_name = name.split(" ")[0].lower()
+        guests[first_name] = {
+            "id": row_id,
+            "name": name,
+        }
+
+    return guests
+
+
 # find gcal stays that are not in notion
 # if guest name is in both and dates are the same, consider them the same
 # if a notion stay has the same date but not the same guest name, warn of ambiguity and consider different
@@ -227,28 +256,81 @@ def find_missing_gcal_stays(
     return missing_stays
 
 
-def add_to_notion(event: GCalStay) -> None:
+# def find_missing_gcal_guests(
+#     gcal_stays: List[GCalStay], notion_guests: Dict[str, NotionGuest]
+# ) -> List[GCalStay]:
+
+#     # check if the gcal event is in the notion stayse
+#     missing_guests
+#     for gcal_stay in gcal_stays:
+#         if gcal_stay["id"] not in existing_gcal_ids:
+#             missing_stays.append(gcal_stay)
+
+
+def add_stay_to_notion(
+    event: GCalStay, existing_guests: Dict[str, NotionGuest]
+) -> None:
     notion = Client(auth=os.environ["NOTION_TOKEN"])
     database_id = os.environ["NOTION_GUEST_STAYS_DB_ID"]
 
+    if event["guest"].lower() in existing_guests:
+        notion_guest_id = existing_guests[event["guest"].lower()]["id"]
+        logging.info(f"Notion: Guest {event['guest']} found in Notion")
+    else:
+        logging.info(f"Notion: Guest {event['guest']} not found in Notion")
+        new_guest = add_guest_to_notion(event["guest"])
+        notion_guest_id = new_guest["id"]
+        existing_guests[event["guest"].lower()] = new_guest
+
+    properties = {
+        "Name": {"title": [{"text": {"content": event["summary"]}}]},
+        "Date": {
+            "date": {
+                "start": event["start"].isoformat(),
+                "end": (event["end"] - timedelta(days=1)).isoformat(),
+            }
+        },
+        "GCal ID": {
+            "rich_text": [{"text": {"content": event["id"]}}],
+        },
+    }
+
+    if notion_guest_id:
+        properties["Guest"] = {
+            "relation": [{"id": notion_guest_id}],
+        }
+
+    logging.info(f"Notion: Adding stay {event['summary']} to database")
     notion.pages.create(
         parent={"database_id": database_id},
-        properties={
-            "Name": {"title": [{"text": {"content": event["summary"]}}]},
-            "Date": {
-                "date": {
-                    "start": event["start"].isoformat(),
-                    "end": (event["end"] - timedelta(days=1)).isoformat(),
-                }
-            },
-            "GCal ID": {
-                "rich_text": [{"text": {"content": event["id"]}}],
-            },
-        },
+        properties=properties,
     )
 
 
+def add_guest_to_notion(guest: str) -> NotionGuest:
+    notion = Client(auth=os.environ["NOTION_TOKEN"])
+    database_id = os.environ["NOTION_GUEST_DB_ID"]
+
+    properties = {
+        "Name": {"title": [{"text": {"content": guest}}]},
+    }
+
+    logging.info(f"Notion: Adding guest {guest} to database")
+    page = notion.pages.create(
+        parent={"database_id": database_id},
+        properties=properties,
+    )
+    page = cast(Dict[str, Any], page)
+
+    return {
+        "id": page["id"],
+        "name": guest,
+    }
+
+
 def main() -> None:
+    existing_guests = get_existing_notion_guests()
+    print(existing_guests)
     existing_stays = get_existing_notion_stays()
     events = get_calendar_events()
     gcal_stays = filter_stay_events(events)
@@ -277,12 +359,12 @@ def main() -> None:
     #     "id": "test_id",
     # }
 
-    # add_to_notion(test_event_to_add)
+    # add_stay_to_notion(test_event_to_add)
 
     count = 0
     for stay in missing_stays:
         count += 1
-        add_to_notion(stay)
+        add_stay_to_notion(stay, existing_guests)
 
     logging.info(f"Added {count} stays to Notion")
 
