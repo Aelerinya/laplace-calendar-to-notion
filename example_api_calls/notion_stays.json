@@ -1,0 +1,272 @@
+{
+  "object": "list",
+  "results": [
+    {
+      "object": "page",
+      "id": "120baaa5-2195-813f-bf95-f3e7ffbb3af9",
+      "created_time": "2024-10-15T09:43:00.000Z",
+      "last_edited_time": "2024-10-15T09:43:00.000Z",
+      "created_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+      },
+      "last_edited_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+      },
+      "cover": null,
+      "icon": null,
+      "parent": {
+        "type": "database_id",
+        "database_id": "120baaa5-2195-813b-a359-dc57e4c787fb"
+      },
+      "archived": false,
+      "in_trash": false,
+      "properties": {
+        "Paid": { "id": "GuXL", "type": "checkbox", "checkbox": false },
+        "Date": {
+          "id": "Kyez",
+          "type": "date",
+          "date": {
+            "start": "2024-10-10",
+            "end": "2024-10-12",
+            "time_zone": null
+          }
+        },
+        "Guest": {
+          "id": "LhRy",
+          "type": "relation",
+          "relation": [{ "id": "120baaa5-2195-81f3-a73b-cb921b15853e" }],
+          "has_more": false
+        },
+        "Guest name": {
+          "id": "kHdG",
+          "type": "rollup",
+          "rollup": {
+            "type": "array",
+            "array": [
+              {
+                "type": "title",
+                "title": [
+                  {
+                    "type": "text",
+                    "text": { "content": "Jason Zhou", "link": null },
+                    "annotations": {
+                      "bold": false,
+                      "italic": false,
+                      "strikethrough": false,
+                      "underline": false,
+                      "code": false,
+                      "color": "default"
+                    },
+                    "plain_text": "Jason Zhou",
+                    "href": null
+                  }
+                ]
+              }
+            ],
+            "function": "show_original"
+          }
+        },
+        "Stay length": {
+          "id": "%7CYm%5E",
+          "type": "formula",
+          "formula": { "type": "number", "number": 2 }
+        },
+        "Name": {
+          "id": "title",
+          "type": "title",
+          "title": [
+            {
+              "type": "text",
+              "text": { "content": "Jason ", "link": null },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": "Jason ",
+              "href": null
+            },
+            {
+              "type": "mention",
+              "mention": {
+                "type": "date",
+                "date": {
+                  "start": "2024-10-10",
+                  "end": null,
+                  "time_zone": null
+                }
+              },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": "2024-10-10",
+              "href": null
+            },
+            {
+              "type": "text",
+              "text": { "content": " ", "link": null },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": " ",
+              "href": null
+            }
+          ]
+        }
+      },
+      "url": "https://www.notion.so/Jason-120baaa52195813fbf95f3e7ffbb3af9",
+      "public_url": null
+    },
+    {
+      "object": "page",
+      "id": "120baaa5-2195-81f6-a6fd-dc0408a34559",
+      "created_time": "2024-10-15T09:43:00.000Z",
+      "last_edited_time": "2024-10-15T09:43:00.000Z",
+      "created_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+      },
+      "last_edited_by": {
+        "object": "user",
+        "id": "a8298461-3490-4bf7-aa5e-799c1c9c8ed8"
+      },
+      "cover": null,
+      "icon": null,
+      "parent": {
+        "type": "database_id",
+        "database_id": "120baaa5-2195-813b-a359-dc57e4c787fb"
+      },
+      "archived": false,
+      "in_trash": false,
+      "properties": {
+        "Paid": { "id": "GuXL", "type": "checkbox", "checkbox": false },
+        "Date": {
+          "id": "Kyez",
+          "type": "date",
+          "date": {
+            "start": "2024-10-03",
+            "end": "2024-10-14",
+            "time_zone": null
+          }
+        },
+        "Guest": {
+          "id": "LhRy",
+          "type": "relation",
+          "relation": [{ "id": "120baaa5-2195-8126-b025-c8ab1dc374d1" }],
+          "has_more": false
+        },
+        "Guest name": {
+          "id": "kHdG",
+          "type": "rollup",
+          "rollup": {
+            "type": "array",
+            "array": [
+              {
+                "type": "title",
+                "title": [
+                  {
+                    "type": "text",
+                    "text": { "content": "Simon Baars", "link": null },
+                    "annotations": {
+                      "bold": false,
+                      "italic": false,
+                      "strikethrough": false,
+                      "underline": false,
+                      "code": false,
+                      "color": "default"
+                    },
+                    "plain_text": "Simon Baars",
+                    "href": null
+                  }
+                ]
+              }
+            ],
+            "function": "show_original"
+          }
+        },
+        "Stay length": {
+          "id": "%7CYm%5E",
+          "type": "formula",
+          "formula": { "type": "number", "number": 11 }
+        },
+        "Name": {
+          "id": "title",
+          "type": "title",
+          "title": [
+            {
+              "type": "text",
+              "text": { "content": "Simon ", "link": null },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": "Simon ",
+              "href": null
+            },
+            {
+              "type": "mention",
+              "mention": {
+                "type": "date",
+                "date": {
+                  "start": "2024-10-03",
+                  "end": null,
+                  "time_zone": null
+                }
+              },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": "2024-10-03",
+              "href": null
+            },
+            {
+              "type": "text",
+              "text": { "content": " ", "link": null },
+              "annotations": {
+                "bold": false,
+                "italic": false,
+                "strikethrough": false,
+                "underline": false,
+                "code": false,
+                "color": "default"
+              },
+              "plain_text": " ",
+              "href": null
+            }
+          ]
+        }
+      },
+      "url": "https://www.notion.so/Simon-120baaa5219581f6a6fddc0408a34559",
+      "public_url": null
+    }
+  ],
+  "next_cursor": null,
+  "has_more": false,
+  "type": "page_or_database",
+  "page_or_database": {},
+  "request_id": "dd37de2e-8e77-430b-bf45-8ebaef0e3b48"
+}

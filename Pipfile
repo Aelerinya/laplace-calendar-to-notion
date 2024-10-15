@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+notion-client = "*"
+python-dotenv = "*"
+python-dateutil = "*"
+icalendar = "*"
+
+[dev-packages]
+mypy = "*"
+types-icalendar = "*"
+types-python-dateutil = "*"
+
+[requires]
+python_version = "3.12"
