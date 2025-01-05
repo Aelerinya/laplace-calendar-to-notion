@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from datetime import date, datetime, timedelta
@@ -103,7 +104,9 @@ def get_calendar_events(days_ago: int | None = None) -> List[GCalEvent]:
                 continue
 
             # Check if the event is within the specified date range
-            if (days_ago is None and end <= now) or (time_ago <= end <= now):
+            if (days_ago is None and start <= now) or (
+                days_ago is not None and time_ago <= start <= now
+            ):
                 events.append(
                     {
                         "summary": summary,
@@ -134,6 +137,9 @@ def filter_stay_events(events: List[GCalEvent]) -> List[GCalStay]:
                 f"Skipping {event['summary']} because it's not a stay (no Laplace in name)"
             )
             return False
+        if "cowork" in event["summary"].lower():
+            logging.info(f"Skipping {event["summary"]} because it's a cowork")
+            return False
         return True
 
     return [
@@ -155,13 +161,30 @@ def get_existing_notion_stays() -> List[NotionStay]:
     notion = Client(auth=os.environ["NOTION_TOKEN"])
     database_id = os.environ["NOTION_GUEST_STAYS_DB_ID"]
 
-    results = notion.databases.query(database_id=database_id)
-    results = cast(Dict[str, Any], results)
+    results: list[Any] = []
+    next_cursor = None
+
+    while True:
+        if next_cursor:
+            response = notion.databases.query(
+                database_id=database_id, start_cursor=next_cursor
+            )
+        else:
+            response = notion.databases.query(database_id=database_id)
+
+        response = cast(Dict[str, Any], response)
+
+        results = results + response["results"]
+
+        if response["has_more"]:
+            next_cursor = response["next_cursor"]
+        else:
+            break
 
     # example of a row in notion_stay.json
     typed_objects: List[NotionStay] = []
 
-    for item in results["results"]:
+    for item in results:
         row_id = item["id"]
         properties = item["properties"]
 
@@ -231,14 +254,16 @@ def get_existing_notion_guests() -> Dict[str, NotionGuest]:
 
         first_name = name.split(" ")[0].lower()
         if first_name in guests:
-            logging.warning(f"Notion: Ambiguous first name {first_name} for '{name}' and '{guests[first_name]['name']}'")
+            logging.warning(
+                f"Notion: Ambiguous first name {first_name} for '{name}' and '{guests[first_name]['name']}'"
+            )
             ambiguous_first_names.append(first_name)
             del guests[first_name]
         elif first_name not in ambiguous_first_names:
             guests[first_name] = {
                 "id": row_id,
-            "name": name,
-        }
+                "name": name,
+            }
 
     return guests
 
@@ -335,9 +360,24 @@ def add_guest_to_notion(guest: str) -> NotionGuest:
     }
 
 
+class Args:
+    dry_run: bool
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Process some options.")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Perform a dry run without making changes",
+    )
+
+    args = cast(Args, parser.parse_args())
+
+    if args.dry_run:
+        print("[DRY RUN]")
+
     existing_guests = get_existing_notion_guests()
-    print(existing_guests)
     existing_stays = get_existing_notion_stays()
     events = get_calendar_events()
     gcal_stays = filter_stay_events(events)
@@ -371,7 +411,10 @@ def main() -> None:
     count = 0
     for stay in missing_stays:
         count += 1
-        add_stay_to_notion(stay, existing_guests)
+        if args.dry_run:
+            print(stay)
+        else:
+            add_stay_to_notion(stay, existing_guests)
 
     logging.info(f"Added {count} stays to Notion")
 
